@@ -44,6 +44,7 @@
 // Topologia
 
 // PPP
+#define PPP                  10
 #define RETARDO_PROP_PPP    "2ms"
 #define CAPACIDAD_PPP       "150kbps"
 
@@ -100,6 +101,7 @@ using namespace ns3;
  */
 typedef struct {
     // PPP
+    uint32_t ppp;
     Time *retardoPropPPP;
     DataRate *capacidadPPP;
 } ConfigTopologia;
@@ -168,5 +170,20 @@ void initParams(ConfigTopologia *confTopologia, ConfigTrafico *confTrafico,
 void leeParamLineaCommandos(int argc, char *argv[],
     ConfigTopologia *confTopologia, ConfigTrafico *confTrafico,
     ConfigDatos *confDatos);
+
+
+/**
+ * Realiza la simulacion de un escenario con la configuracion
+ * indicada en sus parametros
+ *
+ * @param confTopologia configuracion relativa a la topologia
+ * @param confTrafico configuracion relativa al trafico
+ * @param confDatos configuracion relativa la presentacion de
+ *     los resultados
+ *
+ * @returns 
+ */
+void escenario(ConfigTopologia confTopologia,
+    ConfigTrafico confTrafico, ConfigDatos confDatos);
 
 #endif

@@ -39,6 +39,10 @@ int main(int argc, char *argv[]) {
     leeParamLineaCommandos(argc, argv, &confTopologia, &confTrafico,
         &confDatos);
 
+
+    escenario(confTopologia, confTrafico, confDatos);
+
+
     return 0;
 }
 
@@ -63,6 +67,7 @@ void initParams(ConfigTopologia *confTopologia, ConfigTrafico *confTrafico,
         ConfigDatos *confDatos) {
     // Topologia
     // PPP
+    confTopologia->ppp = PPP;
     confTopologia->retardoPropPPP = new Time(RETARDO_PROP_PPP);
     confTopologia->capacidadPPP = new DataRate(CAPACIDAD_PPP);
 
@@ -83,6 +88,7 @@ void leeParamLineaCommandos(int argc, char *argv[],
     CommandLine cmd;
     // Topologia
     // PPP
+    cmd.AddValue("ppp", "Numero de equipos en topologia 1", confTopologia->ppp);
     cmd.AddValue("retardoPropPPP", "Retardo de propagacion en el enlace ppp",
         *confTopologia->retardoPropPPP);
     cmd.AddValue("capacidadPaP", "Capacidad del enlace PaP",
@@ -112,7 +118,13 @@ void leeParamLineaCommandos(int argc, char *argv[],
    
 }
 
-void escenario(){
+void escenario(ConfigTopologia confTopologia,
+        ConfigTrafico confTrafico, ConfigDatos confDatos){
+
+  NS_LOG_FUNCTION("Entrando en la funcion escenario");
+
+  // Primero creamos los nodos
+  NS_LOG_DEBUG("Creando los nodos");
   // Creamos los contenedores para los nodos
   // Nodo del switch
   NodeContainer nodoSwitch;
@@ -124,7 +136,7 @@ void escenario(){
 
   // Nodos clientes
   NodeContainer nodosClientes;
-  nodosClientes.Create(1);
+  nodosClientes.Create(ConfigTopologia.ppp);
 
   // Nodos finales (clientes y servidor) para instalar la pila
   NodeContainer nodosFinales;
@@ -140,11 +152,13 @@ void escenario(){
   enlaceSwitchCliente.Add(nodoSwitch);
   enlaceSwitchCliente.Add(nodosClientes);
 
+  // Dispositivos de red y canal de los nodos PPP
+  NS_LOG_DEBUG("Creando dispositivos ppp");
   // Helper para PointToPoint
   // Configuramos las características de los enlaces PAP
   PointToPointHelper puntoAPunto;
-  puntoAPunto.SetChannelAttribute("Delay", TimeValue(confTopologia->retardoPropPPP));
-  puntoAPunto.SetDeviceSttribute("DataRate", DataRateValue(confTopologia->capacidadPPP));
+  puntoAPunto.SetChannelAttribute("Delay", TimeValue(*confTopologia.retardoPropPPP));
+  puntoAPunto.SetDeviceSttribute("DataRate", DataRateValue(*confTopologia.capacidadPPP));
   
   // Instalamos PPP en los dispositivos de la topología
   NetDeviceContainer dispSwitchSer;
@@ -152,6 +166,12 @@ void escenario(){
   NetDeviceContainer dispSwitchCli;
   dispSwitchCli= puntoAPunto.Install(enlaceSwitchCliente);
   
+  // Trazas pcap
+    if(confDatos.todasTrazas) {
+        NS_LOG_INFO("Activando trazas pcap de todos los nodos");
+        puntoAPunto.EnablePcapAll("puntoAPunto.tr");
+    }
+
   // Este container almacenará todos los dispositivos del escenario que tengan pila IP
   NetDeviceContainer switchPorts;
   // Recuperamos del primer container el servidor y del segundo todos los clientes
